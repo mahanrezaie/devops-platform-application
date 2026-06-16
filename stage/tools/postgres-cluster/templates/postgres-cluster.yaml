@@ -27,7 +27,7 @@ spec:
             storage: 5Gi
         storageClassName: topolvm-provisioner
       name: pgha1
-      replicas: 1
+      replicas: 2
       resources:
         requests:
           memory: 1Gi
