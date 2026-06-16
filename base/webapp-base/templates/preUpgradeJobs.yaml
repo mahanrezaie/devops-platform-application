@@ -1,0 +1,61 @@
+{{- if .Values.preUpgradeJobs }}
+{{- range $job := .Values.preUpgradeJobs }}
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ $job.name }}
+  annotations:
+    "helm.sh/hook": pre-upgrade,pre-install
+    "helm.sh/hook-delete-policy": hook-succeeded
+    "helm.sh/hook-weight": "-5"
+    argocd.argoproj.io/hook: PreSync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+spec:
+  template:
+    spec:
+      {{- with $job.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      securityContext:
+          {{- toYaml $.Values.podSecurityContext | nindent 8 }}
+      containers:
+      - name: {{ $job.name }}
+        image: {{ $job.image.repository }}:{{ $job.image.tag }}
+        imagePullPolicy: {{ $job.image.pullPolicy }}
+        {{- if $job.command }}
+        command:
+          {{- toYaml $job.command | nindent 12 }}
+        {{- end }}
+        {{- if $job.args }}
+        args:
+          {{- toYaml $job.args | nindent 12 }}
+        {{- end }}
+        securityContext:
+            {{- toYaml $.Values.securityContext | nindent 12 }}
+        {{- if or $.Values.env $.Values.secretEnv }}
+        env:
+          {{- range $key, $val := $.Values.env }}
+          - name: {{ $key }}
+            value: {{ $val | quote }}
+          {{- end }}
+          {{- range $item := $.Values.secretEnv }}
+          - name: {{ $item.name }}
+            valueFrom:
+              secretKeyRef:
+                name: {{ $item.secretName }}
+                key: {{ $item.key }}
+          {{- end }}
+        {{- end }}
+        {{- if $.Values.envFrom }}
+        envFrom:
+          {{- range $val := $.Values.envFrom }}
+          - configMapRef:
+              name: {{ $val }}
+          {{- end }}
+        {{- end }}
+      restartPolicy: Never
+  backoffLimit: 4
+{{- end }}
+{{- end }}

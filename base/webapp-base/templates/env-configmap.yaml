@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{.Release.Name }}-{{ .Chart.Name }}-env-file
+data:
+  .env: |-
+    {{- range $key, $value := .Values.env }}
+    {{ $key }}={{ $value }}
+    {{- end }}

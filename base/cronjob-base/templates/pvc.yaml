@@ -1,0 +1,18 @@
+{{ $labels := include "cronjob-base.labels" .}}
+{{- range $i, $val := .Values.persistentVolumeClaims }}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ $val.name }}
+  labels:
+    {{- $labels | nindent 4 }}
+spec:
+  {{- if $val.storageClassName }}
+  storageClassName: {{ $val.storageClassName }}
+  {{- end }}
+  accessModes:
+    {{- toYaml $val.accessModes | nindent 4 }}
+  resources:
+    requests:
+      storage: {{ $val.capacity }}
+{{- end }}

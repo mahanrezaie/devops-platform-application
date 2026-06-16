@@ -1,0 +1,25 @@
+{{- if .Values.metrics.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    {{- include "webapp-base.labels" . | nindent 4 }}
+    {{- with .Values.metrics.serviceMonitor.labels }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+  name: {{ include "webapp-base.fullname" . }}
+  namespace: {{ .Values.metrics.serviceMonitor.namespace }}
+spec:
+  endpoints:
+    {{- toYaml .Values.metrics.serviceMonitor.endpoints | nindent 4 }}
+  jobLabel: {{ include "webapp-base.fullname" . }}
+  namespaceSelector:
+    matchNames:
+      - {{ .Release.Namespace }}
+  selector:
+    matchLabels:
+      {{- include "webapp-base.selectorLabels" . | nindent 6 }}
+      {{- with .Values.metrics.serviceMonitor.selectorLabels }}
+      {{- toYaml . | nindent 6 }}
+      {{- end }}
+{{- end }}

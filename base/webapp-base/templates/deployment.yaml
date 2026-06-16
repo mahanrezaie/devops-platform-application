@@ -1,0 +1,191 @@
+apiVersion: apps/v1
+kind: {{ if eq .Values.deploymentMode "DaemonSet" -}}DaemonSet{{- else -}}Deployment{{- end }}
+metadata:
+  name: {{ include "webapp-base.fullname" . }}
+  labels:
+    {{- include "webapp-base.labels" . | nindent 4 }}
+spec:
+  {{- if not (or .Values.autoscaling.enabled (eq .Values.deploymentMode "DaemonSet")) }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "webapp-base.selectorLabels" . | nindent 6 }}
+  {{- with .Values.deploymentStrategy }}
+  strategy:
+    type: {{ .type }}
+    {{- if and (eq "RollingUpdate" .type) .rollingUpdate }}
+    rollingUpdate:
+      maxSurge: {{ .rollingUpdate.maxSurge }}
+      maxUnavailable: {{ .rollingUpdate.maxUnavailable }}
+    {{- end }}
+  {{- end }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        co.elastic.logs.{{ .Release.Name }}/json.add_error_key: 'true'
+        co.elastic.logs.{{ .Release.Name }}/json.message_key: msg
+        co.elastic.logs.{{ .Release.Name }}/keys_under_root: 'true'
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "webapp-base.selectorLabels" . | nindent 8 }}
+    spec:
+      hostNetwork: {{ .Values.hostNetwork }}
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "webapp-base.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      {{- with .Values.initContainers }}
+      initContainers:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.exec.command }}
+          command:
+            {{- toYaml .Values.exec.command | nindent 12 }}
+          {{- end }}
+          {{- if .Values.exec.args }}
+          args:
+            {{- toYaml .Values.exec.args | nindent 12 }}
+          {{- end }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          {{- if or .Values.env .Values.secretEnv }}
+          env:
+            {{- range $key, $val := .Values.env }}
+            - name: {{ $key }}
+              value: {{ $val | quote }}
+            {{- end }}
+            {{- range $item := .Values.secretEnv }}
+            - name: {{ $item.name }}
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $item.secretName }}
+                  key: {{ $item.key }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.envFrom }}
+          envFrom:
+            {{- range $val := .Values.envFrom }}
+            - configMapRef:
+                name: {{ $val }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.livenessProbe.enabled }}
+          livenessProbe:
+            {{- if .Values.livenessProbe.path }}
+            httpGet:
+              path: {{ .Values.livenessProbe.path }}
+              port: http
+            {{- else if .Values.livenessProbe.exec }}
+            exec:
+              command:
+                {{- toYaml .Values.livenessProbe.exec.command | nindent 16 }}
+            {{- else if .Values.livenessProbe.tcp }}
+            tcpSocket:
+              port: {{ .Values.livenessProbe.tcp }}
+            {{- end }}
+            initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+            successThreshold: {{ .Values.livenessProbe.successThreshold }}
+          {{- end }}
+          {{- if .Values.readinessProbe.enabled }}
+          readinessProbe:
+            {{- if .Values.readinessProbe.path }}
+            httpGet:
+              path: {{ .Values.readinessProbe.path }}
+              port: http
+            {{- else if .Values.readinessProbe.exec }}
+            exec:
+              command:
+                {{- toYaml .Values.readinessProbe.exec.command | nindent 16 }}
+            {{- else if .Values.readinessProbe.tcp }}
+            tcpSocket:
+              port: {{ .Values.readinessProbe.tcp }}
+            {{- end }}
+            initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+            successThreshold: {{ .Values.readinessProbe.successThreshold }}
+          {{- end }}
+          {{- if .Values.startupProbe.enabled }}
+          startupProbe:
+            {{- if .Values.startupProbe.path }}
+            httpGet:
+              path: {{ .Values.startupProbe.path }}
+              port: http
+            {{- else if .Values.startupProbe.exec }}
+            exec:
+              command:
+                {{- toYaml .Values.startupProbe.exec.command | nindent 16 }}
+            {{- else if .Values.startupProbe.tcp }}
+            tcpSocket:
+              port: {{ .Values.startupProbe.tcp }}
+            {{- end }}
+            initialDelaySeconds: {{ .Values.startupProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.startupProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.startupProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.startupProbe.failureThreshold }}
+            successThreshold: {{ .Values.startupProbe.successThreshold }}
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          {{- if or .Values.volumeMounts .Values.envFilePath }}
+          volumeMounts:
+            {{- if .Values.envFilePath }}
+            - name: env-file
+              mountPath: {{ .Values.envFilePath }}
+              subPath: ".env"
+              readOnly: true
+            {{- end }}
+            {{- if .Values.volumeMounts }}
+            {{- toYaml .Values.volumeMounts | nindent 12 }}
+            {{- end }}
+          {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- if or .Values.volumes .Values.envFilePath }}
+      volumes:
+        {{- if .Values.envFilePath }}
+        - name: env-file
+          configMap:
+            name: {{.Release.Name }}-{{ .Chart.Name }}-env-file
+        {{- end }}
+        {{- if .Values.volumes }}
+        {{- toYaml .Values.volumes | nindent 8 }}
+        {{- end }}
+      {{- end }}
+      hostNetwork: {{ .Values.hostNetwork }}
+      {{- with .Values.dnsPolicy }}
+      dnsPolicy: {{ . }}
+      {{- end }}
+      {{- with .Values.dnsConfig }}
+      dnsConfig:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      
