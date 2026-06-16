@@ -1,7 +1,7 @@
 web:
   image:
     repository: ghcr.io/mahanrezaie/ip-lookup-api
-    tag: "5921240"
+    tag: "stage-c0b9544"
   service:
     port: 8000
   resources:
