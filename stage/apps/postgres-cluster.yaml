@@ -10,7 +10,7 @@ spec:
   source:
     repoURL: https://github.com/mahanrezaie/devops-platform-application.git
     path: stage/tools/postgres-cluster
-    targetRevision: HEAD
+    targetRevision: main
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: devops-platform-stage-postgres
