@@ -7,5 +7,5 @@ dependencies:
 - name: webapp-base
   version: 0.1.0
   repository: "file://../../../base/webapp-base"
-  alias: ip-lookup
+  alias: web
   condition: web.enabled

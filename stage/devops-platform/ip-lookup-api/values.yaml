@@ -1,4 +1,4 @@
-ip-lookup:
+web:
   image:
     repository: ghcr.io/mahanrezaie/ip-lookup-api
     tag: "5921240"
@@ -23,7 +23,3 @@ ip-lookup:
     - name: DATABASE_URL
       secretName: postgres-url
       key: database_url
-web:
-  image:
-    repository: ghcr.io/mahanrezaie/ip-lookup-api
-    tag: stage-c0b9544
