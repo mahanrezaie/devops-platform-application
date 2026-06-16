@@ -19,4 +19,7 @@ ip-lookup:
         paths:
           - path: /
             pathType: ImplementationSpecific
-
+  secretEnv:
+    - name: DATABASE_URL
+      secretName: postgres-url
+      key: database_url
