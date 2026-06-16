@@ -1,0 +1,11 @@
+apiVersion: v2
+name: ip-lookup
+description: An umbrella chart for the ip-lookup application
+type: application
+version: 0.1.0
+dependencies:
+- name: webapp-base
+  version: 0.1.0
+  repository: "file://../../../base/webapp-base"
+  alias: ip-lookup
+  condition: web.enabled

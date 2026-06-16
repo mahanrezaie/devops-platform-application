@@ -1,0 +1,25 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: devops-platform-stage-ip-lookup
+  namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/mahanrezaie/devops-platform-application.git
+    path: stage/devops-platform/iplookup
+    targetRevision: main
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: devops-platform-stage-ip-lookup
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: false
+    syncOptions:
+      - CreateNamespace=true
+      - Validate=false
+      - Prune=true
+      - SelfHeal=false

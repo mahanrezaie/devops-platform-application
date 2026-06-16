@@ -1,0 +1,22 @@
+ip-lookup:
+  image:
+    repository: ghcr.io/mahanrezaie/ip-lookup-api
+    tag: "5921240"
+  service:
+    port: 8000
+  resources:
+    limits:
+      cpu: 200m
+      memory: 200Mi
+    requests:
+      cpu: 200m
+      memory: 200Mi
+  ingress:
+    enabled: true
+    className: traefik
+    hosts:
+      - host: ip-lookup.local
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+
