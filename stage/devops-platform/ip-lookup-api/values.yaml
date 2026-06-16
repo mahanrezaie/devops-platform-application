@@ -6,11 +6,17 @@ web:
     port: 8000
   resources:
     limits:
-      cpu: 200m
+      cpu: 300m
       memory: 200Mi
     requests:
-      cpu: 200m
+      cpu: 300m
       memory: 200Mi
+  livenessProbe:
+    enabled: true
+    path: /health/live
+  readinessProbe:
+    enabled: true
+    path: /health/ready
   ingress:
     enabled: true
     className: traefik
