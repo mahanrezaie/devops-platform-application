@@ -4,7 +4,6 @@ metadata:
   name: devops-platform-stage-postgrescluter
   namespace: devops-platform-stage-postgres
 spec:
-  shutdown: {{ .Values.shutdown }}
   backups:
     pgbackrest:
       repos:
