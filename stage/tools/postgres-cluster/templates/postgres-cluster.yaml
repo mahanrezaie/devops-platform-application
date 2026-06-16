@@ -35,6 +35,10 @@ spec:
         limits:
           memory: 1Gi
           cpu: 1
+      securityContext:
+        runAsUser: 26
+        runAsGroup: 26
+        fsGroup: 26
 
   postgresVersion: 17
   proxy:
