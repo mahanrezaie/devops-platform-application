@@ -1,0 +1,52 @@
+apiVersion: postgres-operator.crunchydata.com/v1beta1
+kind: PostgresCluster
+metadata:
+  name: devops-platform-stage-postgrescluter
+  namespace: devops-platform-stage-postgres
+spec:
+  shutdown: {{ .Values.shutdown }}
+  backups:
+    pgbackrest:
+      repos:
+        - name: repo1
+          volume:
+            volumeClaimSpec:
+              storageClassName: topolvm-provisioner
+              accessModes:
+              - "ReadWriteOnce"
+              resources:
+                requests:
+                  storage: 1Gi
+
+  instances:
+    - dataVolumeClaimSpec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 5Gi
+        storageClassName: topolvm-provisioner
+      name: pgha1
+      replicas: 1
+      resources:
+        requests:
+          memory: 1Gi
+          cpu: 1
+        limits:
+          memory: 1Gi
+          cpu: 1
+
+  postgresVersion: 17
+  proxy:
+    pgBouncer:
+      replicas: 1
+      config:
+        global:
+          ignore_startup_parameters: 'search_path,extra_float_digits'
+          pool_mode: transaction
+          client_tls_sslmode: disable
+  users:
+    - name: postgres
+    - databases:
+        - iplookup
+      name: iplookup-admin
