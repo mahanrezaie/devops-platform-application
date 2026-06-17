@@ -14,8 +14,8 @@ spec:
 
   selector:
     matchLabels:
-      app: devops-platform-stage-ip-lookup-web
-
+      app.kubernetes.io/name: web
+      app.kubernetes.io/instance: devops-platform-stage-ip-lookup
   endpoints:
     - port: http
       path: /metrics
