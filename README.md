@@ -1,4 +1,4 @@
-# ArgoCD Application Manifests
+# ArgoCD Apps Templates
 
 This repository contains Kubernetes application definitions managed by ArgoCD.
 
